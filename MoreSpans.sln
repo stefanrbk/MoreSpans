@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.4.33122.133
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MoreSpans", "MoreSpans\MoreSpans.csproj", "{52327A67-76F2-48E8-9C13-DFB7EAA6D37B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MoreSpans", "MoreSpans\MoreSpans.csproj", "{52327A67-76F2-48E8-9C13-DFB7EAA6D37B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTests", "Unit Tests\UnitTests.csproj", "{23C4DFEF-7433-4B70-90B3-1554B63DFE15}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{52327A67-76F2-48E8-9C13-DFB7EAA6D37B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{52327A67-76F2-48E8-9C13-DFB7EAA6D37B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{52327A67-76F2-48E8-9C13-DFB7EAA6D37B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{23C4DFEF-7433-4B70-90B3-1554B63DFE15}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{23C4DFEF-7433-4B70-90B3-1554B63DFE15}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{23C4DFEF-7433-4B70-90B3-1554B63DFE15}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{23C4DFEF-7433-4B70-90B3-1554B63DFE15}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
