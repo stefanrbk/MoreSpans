@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace MoreSpans;
 
@@ -51,12 +47,15 @@ public readonly ref struct ReadOnlyConvertingSpan<Tfrom, Tto>
     public static ReadOnlyConvertingSpan<Tfrom, Tto> operator ++(ReadOnlyConvertingSpan<Tfrom, Tto> span) =>
         span[1..];
 
+    [ExcludeFromCodeCoverage]
     public override string ToString() =>
         $"MoreSpans.ReadOnlyConvertingSpan<{typeof(Tfrom).Name},{typeof(Tto).Name}>[{Length}]";
 
+    [ExcludeFromCodeCoverage]
     private string GetDebuggerDisplay() =>
         ToString();
 
+    [ExcludeFromCodeCoverage]
     private sealed class DebugView
     {
         public DebugView(ReadOnlyConvertingSpan<Tfrom, Tto> span)
