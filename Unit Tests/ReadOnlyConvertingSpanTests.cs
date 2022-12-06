@@ -22,7 +22,7 @@ public class ReadOnlyConvertingSpanTests
             var span = GetNeg50ToPos50Span();
 
             for (int i = 0; i < span.Length; i++)
-                Assert.That(span[i] == -neg50ToPos50[i]);
+                Assert.That(span[i], Is.EqualTo(-neg50ToPos50[i]));
         });
     }
 
