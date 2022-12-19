@@ -33,6 +33,11 @@ public class ConvertingSpanTests
         {
             var span = GetNeg50ToPos50Span();
 
+            Assert.That(neg50ToPos50[^1], Is.EqualTo(50));
+            Assert.That(neg50ToPos50[^2], Is.EqualTo(49));
+            Assert.That(neg50ToPos50[^100], Is.EqualTo(-49));
+            Assert.That(neg50ToPos50[^101], Is.EqualTo(-50));
+
             Assert.That(span[^1], Is.EqualTo(-50));
             Assert.That(span[^2], Is.EqualTo(-49));
             Assert.That(span[^100], Is.EqualTo(49));
@@ -113,6 +118,27 @@ public class ConvertingSpanTests
             Assert.That(subSpan2.Length, Is.EqualTo(100));
             Assert.That(subSpan2[0], Is.EqualTo(49));
             Assert.That(subSpan2[^1], Is.EqualTo(-50));
+        });
+    }
+
+    [Test]
+    public void SetterConvertsProperly()
+    {
+        Assert.Multiple(() =>
+        {
+            var span = new ConvertingSpan<int, int>(neg50ToPos50, i => -i, i => i * 2);
+
+            Assert.That(neg50ToPos50[0], Is.EqualTo(-50));
+            Assert.That(neg50ToPos50[^1], Is.EqualTo(50));
+
+            Assert.That(span[0], Is.EqualTo(50));
+            Assert.That(span[^1], Is.EqualTo(-50));
+
+            span[0] = -21;
+            span[^1] = 7;
+
+            Assert.That(span[0], Is.EqualTo(42));
+            Assert.That(span[^1], Is.EqualTo(-14));
         });
     }
 
