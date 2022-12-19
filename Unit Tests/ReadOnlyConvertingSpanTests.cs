@@ -1,10 +1,7 @@
 using MoreSpans;
 
-using System.Diagnostics.CodeAnalysis;
-
 namespace Unit_Tests;
 
-[ExcludeFromCodeCoverage]
 [TestFixture(TestOf = typeof(ReadOnlyConvertingSpan<,>))]
 public class ReadOnlyConvertingSpanTests
 {
