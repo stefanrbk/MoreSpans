@@ -1,5 +1,7 @@
-﻿using System.Diagnostics;
+﻿using System.ComponentModel;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 
 namespace MoreSpans;
 
@@ -12,12 +14,51 @@ public readonly ref struct ConvertingSpan<Tfrom, Tto>
 
     public Span<Tfrom> Span { get; }
 
+    public bool IsEmpty => 0 >= Span.Length;
+
+    public static ConvertingSpan<Tfrom, Tto> Empty => default;
+
     public ConvertingSpan(Span<Tfrom> span, ConvertFunc<Tfrom, Tto> funcTo, ConvertFunc<Tto, Tfrom> funcFrom)
     {
         Span = span;
         _funcTo = funcTo;
         _funcFrom = funcFrom;
     }
+
+    public ConvertingSpan(Span<Tfrom> span, int start, int length, ConvertFunc<Tfrom, Tto> funcTo, ConvertFunc<Tto, Tfrom> funcFrom)
+    {
+        Span = span.Slice(start, length);
+        _funcTo = funcTo;
+        _funcFrom = funcFrom;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public unsafe ConvertingSpan(void* pointer, int length, ConvertFunc<Tfrom, Tto> funcTo, ConvertFunc<Tto, Tfrom> funcFrom)
+    {
+        Span = new(pointer, length);
+        _funcTo = funcTo;
+        _funcFrom = funcFrom;
+    }
+
+    public static bool operator !=(ConvertingSpan<Tfrom, Tto> left, ConvertingSpan<Tfrom, Tto> right) =>
+        !(left == right);
+
+    public static bool operator ==(ConvertingSpan<Tfrom, Tto> left, ConvertingSpan<Tfrom, Tto> right) =>
+        left == right && left._funcTo == right._funcTo && left._funcFrom == right._funcFrom;
+
+#pragma warning disable CS0809 // Obsolete member overrides non-obsolete member
+
+    [Obsolete("Equals() on ConvertingSpan will always throw an exception. Use the equality operator instead.")]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public override bool Equals(object? obj) =>
+        Span.Equals(obj);
+
+    [Obsolete("GetHashCode() on ConvertingSpan will always throw an exception.")]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public override int GetHashCode() =>
+        Span.GetHashCode();
+
+#pragma warning restore CS0809 // Obsolete member overrides non-obsolete member
 
     public int Length =>
         Span.Length;
@@ -54,6 +95,115 @@ public readonly ref struct ConvertingSpan<Tfrom, Tto>
 
     public static ConvertingSpan<Tfrom, Tto> operator ++(ConvertingSpan<Tfrom, Tto> span) =>
         span[1..];
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void CopyTo(Span<Tto> destination)
+    {
+        if (Length <= destination.Length)
+        {
+            for (int i = 0; i < Length; i++)
+            {
+                destination[i] = this[i];
+            }
+        }
+        else
+        {
+            throw new ArgumentException("Destination is too short.", nameof(destination));
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void CopyTo<T>(ConvertingSpan<T, Tto> destination)
+    {
+        if (Length <= destination.Length)
+        {
+            for (int i = 0; i < Length; i++)
+            {
+                destination[i] = this[i];
+            }
+        }
+        else
+        {
+            throw new ArgumentException("Destination is too short.", nameof(destination));
+        }
+    }
+
+    public bool TryCopyTo(Span<Tto> destination)
+    {
+        if (Length <= destination.Length)
+        {
+            for (int i = 0; i < Length; i++)
+            {
+                destination[i] = this[i];
+            }
+        }
+        else
+        {
+            return false;
+        }
+        return true;
+    }
+
+    public bool TryCopyTo<T>(ConvertingSpan<T, Tto> destination)
+    {
+        if (Length <= destination.Length)
+        {
+            for (int i = 0; i < Length; i++)
+            {
+                destination[i] = this[i];
+            }
+        }
+        else
+        {
+            return false;
+        }
+        return true;
+    }
+
+    public Tto[] ToArray()
+    {
+        if (Length == 0)
+            return Array.Empty<Tto>();
+
+        Tto[] array = new Tto[Length];
+        CopyTo(array);
+        return array;
+    }
+
+    public static implicit operator ReadOnlyConvertingSpan<Tfrom, Tto>(ConvertingSpan<Tfrom, Tto> span) =>
+        new(span.Span, span._funcTo);
+
+    public Enumerator GetEnumerator() =>
+        new Enumerator(this);
+
+    public ref struct Enumerator
+    {
+        private readonly ConvertingSpan<Tfrom, Tto> _span;
+        private int _index;
+        public readonly Tto Current
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get =>
+                _span[_index];
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal Enumerator(ConvertingSpan<Tfrom, Tto> span)
+        {
+            _span = span;
+            _index = -1;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool MoveNext()
+        {
+            int num = _index + 1;
+            if (num < _span.Length)
+            {
+                _index = num;
+                return true;
+            }
+            return false;
+        }
+    }
 
     [ExcludeFromCodeCoverage]
     public override string ToString() =>
