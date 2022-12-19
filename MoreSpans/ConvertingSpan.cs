@@ -44,7 +44,7 @@ public readonly ref struct ConvertingSpan<Tfrom, Tto>
         !(left == right);
 
     public static bool operator ==(ConvertingSpan<Tfrom, Tto> left, ConvertingSpan<Tfrom, Tto> right) =>
-        left == right && left._funcTo == right._funcTo && left._funcFrom == right._funcFrom;
+        left.Span == right.Span && left._funcTo == right._funcTo && left._funcFrom == right._funcFrom;
 
 #pragma warning disable CS0809 // Obsolete member overrides non-obsolete member
 
