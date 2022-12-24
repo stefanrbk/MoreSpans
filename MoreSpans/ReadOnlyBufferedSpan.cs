@@ -4,6 +4,7 @@ namespace MoreSpans;
 public readonly ref struct ReadOnlyBufferedSpan<Tfrom, Tto>
 {
     private readonly Func<Tfrom, Tto> _funcFromBuffer;
+    private readonly int _size;
 
     public ReadOnlySpan<Tfrom> Span { get; }
 
@@ -12,19 +13,14 @@ public readonly ref struct ReadOnlyBufferedSpan<Tfrom, Tto>
     {
         _funcFromBuffer = funcFromBuffer;
         Span = span;
+        _size = Unsafe.SizeOf<Tto>() / Unsafe.SizeOf<Tfrom>();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ReadOnlyBufferedSpan(ReadOnlySpan<Tfrom> span, int start, int length, Func<Tfrom, Tto> funcFromBuffer)
-    {
-        Span = span.Slice(start, length);
-        _funcFromBuffer = funcFromBuffer;
-    }
+        : this(span.Slice(start, length), funcFromBuffer) { }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public unsafe ReadOnlyBufferedSpan(void* pointer, int length, Func<Tfrom, Tto> funcFromBuffer)
-    {
-        Span = new(pointer, length);
-        _funcFromBuffer = funcFromBuffer;
-    }
+        : this(new(pointer, length), funcFromBuffer) { }
 }
