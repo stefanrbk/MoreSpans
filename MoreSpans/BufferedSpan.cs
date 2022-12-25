@@ -6,6 +6,7 @@ using System.Runtime.CompilerServices;
 namespace MoreSpans;
 
 [DebuggerDisplay($"{{{nameof(GetDebuggerDisplay)}(),nq}}")]
+[DebuggerTypeProxy(typeof(BufferedSpan<,>.DebugView))]
 public readonly ref struct BufferedSpan<Tfrom, Tto>
 {
     private readonly FromBufferFunc<Tfrom, Tto> _funcFromBuffer;
@@ -141,7 +142,7 @@ public readonly ref struct BufferedSpan<Tfrom, Tto>
 
     [ExcludeFromCodeCoverage]
     public override string ToString() =>
-        $"MoreSpans.BufferedSpan<{typeof(Tfrom).Name},{typeof(Tto).Name}>[{Span.Length} -> {Length}]";
+        $"MoreSpans.BufferedSpan<{typeof(Tfrom).Name},{typeof(Tto).Name}>[{Span.Length} <-> {Length}]";
 
     [ExcludeFromCodeCoverage]
     private string GetDebuggerDisplay() =>
@@ -177,5 +178,54 @@ public readonly ref struct BufferedSpan<Tfrom, Tto>
             }
             return false;
         }
+    }
+
+    [ExcludeFromCodeCoverage]
+    private sealed class DebugView
+    {
+        public DebugView(BufferedSpan<Tfrom, Tto> span)
+        {
+            Items = new string[span.Length];
+            GetterFunction = span._funcFromBuffer;
+            SetterFunction = span._funcToBuffer;
+            var size = span._size;
+
+            for (var i = 0; i < span.Length; i++)
+            {
+                var temp = span.Span[(i * size)..];
+                var value = temp[..size].ToArray();
+                object? get;
+                try
+                {
+                    get = span._funcFromBuffer(value);
+                }
+                catch (Exception e)
+                {
+                    get = e;
+                }
+                object? set = null;
+                if (get is Tto v)
+                {
+                    try
+                    {
+                        set = span._funcToBuffer(v);
+                    }
+                    catch (Exception e)
+                    {
+                        set = e;
+                    }
+                }
+
+                Items[i] = get is not Tto
+                    ? $"{value} -Get-> {get}"
+                    : $"{value} -Get-> {get} -Set-> {set}";
+            }
+        }
+
+        public FromBufferFunc<Tfrom, Tto> GetterFunction { get; }
+
+        public ToBufferFunc<Tfrom, Tto> SetterFunction { get; }
+
+        public string[] Items { get; }
     }
 }
