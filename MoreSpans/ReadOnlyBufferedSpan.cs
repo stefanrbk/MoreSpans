@@ -57,5 +57,45 @@ public readonly ref struct ReadOnlyBufferedSpan<Tfrom, Tto>
     public static ReadOnlyBufferedSpan<Tfrom, Tto> operator ++(ReadOnlyBufferedSpan<Tfrom, Tto> span) =>
         span[1..];
 
-    public 
+    public Tto[] ToArray()
+    {
+        var length = Length;
+        var array = new Tto[length];
+        for (var i = 0; i < length; i++)
+            array[i] = this[i];
+
+        return array;
+    }
+
+    public Enumerator GetEnumerator() =>
+        new(this);
+
+    public ref struct Enumerator
+    {
+        private readonly ReadOnlyBufferedSpan<Tfrom, Tto> _span;
+        private int _index;
+        public readonly Tto Current
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get =>
+                _span[_index];
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal Enumerator(ReadOnlyBufferedSpan<Tfrom, Tto> span)
+        {
+            _span = span;
+            _index = -1;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool MoveNext()
+        {
+            int num = _index + 1;
+            if (num < _span.Length)
+            {
+                _index = num;
+                return true;
+            }
+            return false;
+        }
+    }
 }
