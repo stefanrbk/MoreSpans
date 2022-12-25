@@ -103,7 +103,67 @@ public readonly ref struct ReadOnlyBufferedSpan<Tfrom, Tto>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void CopyTo<T>(BufferedSpan<T, Tto> destination)
+    {
+        if (Length <= destination.Length)
+        {
+            for (int i = 0; i < Length; i++)
+                destination[i] = this[i];
+        }
+        else
+        {
+            throw new ArgumentException("Destination is too short.", nameof(destination));
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void CopyTo<T>(ConvertingSpan<T, Tto> destination)
+    {
+        if (Length <= destination.Length)
+        {
+            for (int i = 0; i < Length; i++)
+                destination[i] = this[i];
+        }
+        else
+        {
+            throw new ArgumentException("Destination is too short.", nameof(destination));
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool TryCopyTo(Span<Tto> destination)
+    {
+        if (Length <= destination.Length)
+        {
+            for (int i = 0; i < Length; i++)
+                destination[i] = this[i];
+
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool TryCopyTo<T>(BufferedSpan<T, Tto> destination)
+    {
+        if (Length <= destination.Length)
+        {
+            for (int i = 0; i < Length; i++)
+                destination[i] = this[i];
+
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool TryCopyTo<T>(ConvertingSpan<T, Tto> destination)
     {
         if (Length <= destination.Length)
         {
