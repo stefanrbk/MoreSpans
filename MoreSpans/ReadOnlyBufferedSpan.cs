@@ -26,4 +26,28 @@ public readonly ref struct ReadOnlyBufferedSpan<Tfrom, Tto>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public unsafe ReadOnlyBufferedSpan(void* pointer, int length, FromBufferFunc<Tfrom, Tto> funcFromBuffer)
         : this(new(pointer, length), funcFromBuffer) { }
+
+    public int Length =>
+        Span.Length / _size;
+
+    public Tto this[int index] =>
+        _funcFromBuffer(Span[(index * _size)..]);
+
+    public Tto this[Index index] =>
+        this[index.GetOffset(Length)];
+
+    public ReadOnlyBufferedSpan<Tfrom, Tto> this[Range range]
+    {
+        get
+        {
+            var (start, length) = range.GetOffsetAndLength(Length);
+            return Slice(start, length);
+        }
+    }
+
+    public ReadOnlyBufferedSpan<Tfrom, Tto> Slice(int start) =>
+        new(Span[(start * _size)..], _funcFromBuffer);
+
+    public ReadOnlyBufferedSpan<Tfrom, Tto> Slice(int start, int length) =>
+        new(Span.Slice(start * _size, length * _size), _funcFromBuffer);
 }
