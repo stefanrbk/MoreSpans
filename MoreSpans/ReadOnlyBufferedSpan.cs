@@ -56,4 +56,6 @@ public readonly ref struct ReadOnlyBufferedSpan<Tfrom, Tto>
 
     public static ReadOnlyBufferedSpan<Tfrom, Tto> operator ++(ReadOnlyBufferedSpan<Tfrom, Tto> span) =>
         span[1..];
+
+    public 
 }
