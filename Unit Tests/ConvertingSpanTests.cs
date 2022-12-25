@@ -6,6 +6,10 @@ namespace UnitTests;
 public class ConvertingSpanTests
 {
     private readonly int[] neg50ToPos50 = new int[101];
+    private readonly ConvertingSpan<int, int>.Factory negationFactory = new(i => -i, i => -i);
+    private readonly ConvertingSpan<int, int>.Factory negationAndDoublingFactory = new(i => -i, i => i * 2);
+    private readonly ConvertingSpan<int, int>.Factory doublingFactory = new(i => i * 2, i => i * 2);
+    private readonly BufferedSpan<byte, int>.Factory byteToIntFactory = new(BitConverter.ToInt32, BitConverter.GetBytes);
 
     [SetUp]
     public void Setup()
@@ -126,7 +130,7 @@ public class ConvertingSpanTests
     {
         Assert.Multiple(() =>
         {
-            var span = new ConvertingSpan<int, int>(neg50ToPos50, i => -i, i => i * 2);
+            var span = negationAndDoublingFactory.Build(neg50ToPos50);
 
             Assert.That(neg50ToPos50[0], Is.EqualTo(-50));
             Assert.That(neg50ToPos50[^1], Is.EqualTo(50));
@@ -195,7 +199,7 @@ public class ConvertingSpanTests
                 Span<int> buf1 = stackalloc int[10];
                 Span<int> buf2 = stackalloc int[9];
 
-                var span = new ConvertingSpan<int, int>(buf1, i => -i, i => -i);
+                var span = negationFactory.Build(buf1);
                 span.CopyTo(buf2);
             });
 
@@ -204,8 +208,8 @@ public class ConvertingSpanTests
                 Span<int> buf1 = stackalloc int[10];
                 Span<int> buf2 = stackalloc int[9];
 
-                var span1 = new ConvertingSpan<int, int>(buf1, i => -i, i => -i);
-                var span2 = new ConvertingSpan<int, int>(buf2, i => -i, i => -i);
+                var span1 = negationFactory.Build(buf1);
+                var span2 = negationFactory.Build(buf2);
 
                 span1.CopyTo(span2);
             });
@@ -215,8 +219,8 @@ public class ConvertingSpanTests
                 Span<int> buf1 = stackalloc int[10];
                 Span<byte> buf2 = stackalloc byte[36];
 
-                var span1 = new ConvertingSpan<int, int>(buf1, i => -i, i => -i);
-                var span2 = new BufferedSpan<byte, int>(buf2, BitConverter.ToInt32, BitConverter.GetBytes);
+                var span1 = negationFactory.Build(buf1);
+                var span2 = byteToIntFactory.Build(buf2);
 
                 span1.CopyTo(span2);
             });
@@ -232,9 +236,9 @@ public class ConvertingSpanTests
             Span<int> buf2 = stackalloc int[9];
             Span<byte> buf3 = stackalloc byte[36];
 
-            var span1 = new ConvertingSpan<int, int>(buf1, i => -i, i => -i);
-            var span2 = new ConvertingSpan<int, int>(buf2, i => -i, i => -i);
-            var span3 = new BufferedSpan<byte, int>(buf3, BitConverter.ToInt32, BitConverter.GetBytes);
+            var span1 = negationFactory.Build(buf1);
+            var span2 = negationFactory.Build(buf2);
+            var span3 = byteToIntFactory.Build(buf3);
 
             Assert.That(span1.TryCopyTo(buf2), Is.False);
             Assert.That(span1.TryCopyTo(span2), Is.False);
@@ -250,7 +254,7 @@ public class ConvertingSpanTests
             Span<int> buf1 = Enumerable.Range(4, 6).ToArray();
             Span<int> buf2 = stackalloc int[10];
 
-            var span = new ConvertingSpan<int, int>(buf1, i => -i, i => -i);
+            var span = negationFactory.Build(buf1);
             span.CopyTo(buf2);
 
             for (var i = 0; i < buf2.Length; i++)
@@ -266,8 +270,8 @@ public class ConvertingSpanTests
             Span<int> buf1 = Enumerable.Range(4, 6).ToArray();
             Span<int> buf2 = stackalloc int[10];
 
-            var span1 = new ConvertingSpan<int, int>(buf1, i => -i, i => -i);
-            var span2 = new ConvertingSpan<int, int>(buf2, i => -i, i => -i);
+            var span1 = negationFactory.Build(buf1);
+            var span2 = negationFactory.Build(buf2);
             span1.CopyTo(span2);
 
             for (var i = 0; i < span2.Length; i++)
@@ -286,8 +290,8 @@ public class ConvertingSpanTests
             Span<int> buf1 = Enumerable.Range(4, 6).ToArray();
             Span<byte> buf2 = stackalloc byte[40];
 
-            var span1 = new ConvertingSpan<int, int>(buf1, i => -i, i => -i);
-            var span2 = new BufferedSpan<byte, int>(buf2, BitConverter.ToInt32, BitConverter.GetBytes);
+            var span1 = negationFactory.Build(buf1);
+            var span2 = byteToIntFactory.Build(buf2);
             span1.CopyTo(span2);
 
             for (var i = 0; i < span2.Length; i++)
@@ -303,7 +307,7 @@ public class ConvertingSpanTests
             Span<int> buf1 = Enumerable.Range(4, 6).ToArray();
             Span<int> buf2 = stackalloc int[10];
 
-            var span = new ConvertingSpan<int, int>(buf1, i => -i, i => -i);
+            var span = negationFactory.Build(buf1);
             Assert.That(span.TryCopyTo(buf2), Is.True);
 
             for (var i = 0; i < buf2.Length; i++)
@@ -319,8 +323,8 @@ public class ConvertingSpanTests
             Span<int> buf1 = Enumerable.Range(4, 6).ToArray();
             Span<int> buf2 = stackalloc int[10];
 
-            var span1 = new ConvertingSpan<int, int>(buf1, i => -i, i => -i);
-            var span2 = new ConvertingSpan<int, int>(buf2, i => -i, i => -i);
+            var span1 = negationFactory.Build(buf1);
+            var span2 = negationFactory.Build(buf2);
             Assert.That(span1.TryCopyTo(span2), Is.True);
 
             for (var i = 0; i < span2.Length; i++)
@@ -339,8 +343,8 @@ public class ConvertingSpanTests
             Span<int> buf1 = Enumerable.Range(4, 6).ToArray();
             Span<byte> buf2 = stackalloc byte[40];
 
-            var span1 = new ConvertingSpan<int, int>(buf1, i => -i, i => -i);
-            var span2 = new BufferedSpan<byte, int>(buf2, BitConverter.ToInt32, BitConverter.GetBytes);
+            var span1 = negationFactory.Build(buf1);
+            var span2 = byteToIntFactory.Build(buf2);
             Assert.That(span1.TryCopyTo(span2), Is.True);
 
             for (var i = 0; i < span2.Length; i++)
@@ -374,7 +378,7 @@ public class ConvertingSpanTests
         Assert.Multiple(() =>
         {
             Span<int> buf = Enumerable.Range(0, 10).ToArray();
-            var span = new ConvertingSpan<int, int>(buf, i => i * 2, i => i * 2);
+            var span = doublingFactory.Build(buf);
 
             var j = 0;
             foreach (var i in span)
@@ -389,7 +393,7 @@ public class ConvertingSpanTests
         {
             fixed (void* ptr = &neg50ToPos50[0])
             {
-                var span = new ConvertingSpan<int, int>(ptr, 101, i => -i, i => -i);
+                var span = negationFactory.Build(ptr, 101);
 
                 Assert.That(span[^1], Is.EqualTo(-50));
                 Assert.That(span[^2], Is.EqualTo(-49));
@@ -412,8 +416,8 @@ public class ConvertingSpanTests
     }
 
     private ConvertingSpan<int, int> GetNeg50ToPos50Span() =>
-        new(neg50ToPos50, i => -i, i => -i);
+        negationFactory.Build(neg50ToPos50);
 
     private ConvertingSpan<int, int> GetNeg20ToPos20Span() =>
-        new(neg50ToPos50, 30, 41, i => -i, i => -i);
+        negationFactory.Build(neg50ToPos50, 30, 41);
 }
