@@ -146,4 +146,36 @@ public readonly ref struct BufferedSpan<Tfrom, Tto>
     [ExcludeFromCodeCoverage]
     private string GetDebuggerDisplay() =>
         ToString();
+
+    public Enumerator GetEnumerator() =>
+        new(this);
+
+    public ref struct Enumerator
+    {
+        private readonly BufferedSpan<Tfrom, Tto> _span;
+        private int _index;
+        public readonly Tto Current
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get =>
+                _span[_index];
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal Enumerator(BufferedSpan<Tfrom, Tto> span)
+        {
+            _span = span;
+            _index = -1;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool MoveNext()
+        {
+            int num = _index + 1;
+            if (num < _span.Length)
+            {
+                _index = num;
+                return true;
+            }
+            return false;
+        }
+    }
 }
