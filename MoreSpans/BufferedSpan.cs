@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.ComponentModel;
+using System.Runtime.CompilerServices;
 
 namespace MoreSpans;
 public readonly ref struct BufferedSpan<Tfrom, Tto>
@@ -36,4 +37,24 @@ public readonly ref struct BufferedSpan<Tfrom, Tto>
         Span.IsEmpty;
 
     public static BufferedSpan<Tfrom, Tto> Empty => default;
+
+#pragma warning disable CS0809 // Obsolete member overrides non-obsolete member
+
+    [Obsolete("Equals() on BufferedSpan will always throw an exception. Use the equality operator instead.")]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public override bool Equals(object? obj) =>
+        Span.Equals(obj);
+
+    [Obsolete("GetHashCode() on BufferedSpan will always throw an exception.")]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public override int GetHashCode() =>
+        Span.GetHashCode();
+
+#pragma warning restore CS0809 // Obsolete member overrides non-obsolete member
+
+    public static bool operator !=(BufferedSpan<Tfrom, Tto> left, BufferedSpan<Tfrom, Tto> right) =>
+        !(left == right);
+
+    public static bool operator ==(BufferedSpan<Tfrom, Tto> left, BufferedSpan<Tfrom, Tto> right) =>
+        left.Span == right.Span && left._funcFromBuffer == right._funcFromBuffer && left._funcToBuffer == right._funcToBuffer;
 }
