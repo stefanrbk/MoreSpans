@@ -120,6 +120,20 @@ public readonly ref struct ReadOnlyConvertingSpan<Tfrom, Tto>
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void CopyTo<T>(BufferedSpan<T, Tto> destination)
+    {
+        if (Length <= destination.Length)
+        {
+            for (int i = 0; i < Length; i++)
+                destination[i] = this[i];
+        }
+        else
+        {
+            throw new ArgumentException("Destination is too short.", nameof(destination));
+        }
+    }
+
     public bool TryCopyTo(Span<Tto> destination)
     {
         if (Length <= destination.Length)
@@ -150,6 +164,22 @@ public readonly ref struct ReadOnlyConvertingSpan<Tfrom, Tto>
             return false;
         }
         return true;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool TryCopyTo<T>(BufferedSpan<T, Tto> destination)
+    {
+        if (Length <= destination.Length)
+        {
+            for (int i = 0; i < Length; i++)
+                destination[i] = this[i];
+
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
 
     public Tto[] ToArray()
