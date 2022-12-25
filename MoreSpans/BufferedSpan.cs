@@ -7,7 +7,7 @@ namespace MoreSpans;
 
 [DebuggerDisplay($"{{{nameof(GetDebuggerDisplay)}(),nq}}")]
 [DebuggerTypeProxy(typeof(BufferedSpan<,>.DebugView))]
-public readonly ref struct BufferedSpan<Tfrom, Tto>
+public readonly ref partial struct BufferedSpan<Tfrom, Tto>
 {
     private readonly FromBufferFunc<Tfrom, Tto> _funcFromBuffer;
     private readonly ToBufferFunc<Tfrom, Tto> _funcToBuffer;
