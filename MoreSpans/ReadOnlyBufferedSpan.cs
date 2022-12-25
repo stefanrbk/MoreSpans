@@ -6,86 +6,88 @@ using System.Runtime.CompilerServices;
 namespace MoreSpans;
 
 [DebuggerDisplay($"{{{nameof(GetDebuggerDisplay)}(),nq}}")]
-[DebuggerTypeProxy(typeof(ReadOnlyConvertingSpan<,>.DebugView))]
-public readonly ref struct ReadOnlyConvertingSpan<Tfrom, Tto>
+[DebuggerTypeProxy(typeof(ReadOnlyBufferedSpan<,>.DebugView))]
+public readonly ref struct ReadOnlyBufferedSpan<Tfrom, Tto>
 {
-    private readonly ConvertFunc<Tfrom, Tto> _funcTo;
+    private readonly FromBufferFunc<Tfrom, Tto> _funcFromBuffer;
+    private readonly int _size;
 
     public ReadOnlySpan<Tfrom> Span { get; }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public ReadOnlyConvertingSpan(ReadOnlySpan<Tfrom> span, ConvertFunc<Tfrom, Tto> funcTo)
+    public ReadOnlyBufferedSpan(ReadOnlySpan<Tfrom> span, FromBufferFunc<Tfrom, Tto> funcFromBuffer)
     {
+        _funcFromBuffer = funcFromBuffer;
         Span = span;
-        _funcTo = funcTo;
+        _size = Unsafe.SizeOf<Tto>() / Unsafe.SizeOf<Tfrom>();
+
+        if (_size == 0)
+            throw new NotSupportedException($"The first type arguement \"{typeof(Tfrom).Name}\" cannot be larger than the second type arguement \"{typeof(Tto).Name}\".");
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public ReadOnlyConvertingSpan(ReadOnlySpan<Tfrom> span, int start, int length, ConvertFunc<Tfrom, Tto> funcTo)
-    {
-        Span = span.Slice(start, length);
-        _funcTo = funcTo;
-    }
+    public ReadOnlyBufferedSpan(ReadOnlySpan<Tfrom> span, int start, int length, FromBufferFunc<Tfrom, Tto> funcFromBuffer)
+        : this(span.Slice(start, length), funcFromBuffer) { }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public unsafe ReadOnlyConvertingSpan(void* pointer, int length, ConvertFunc<Tfrom, Tto> funcTo)
-    {
-        Span = new(pointer, length);
-        _funcTo = funcTo;
-    }
+    public unsafe ReadOnlyBufferedSpan(void* pointer, int length, FromBufferFunc<Tfrom, Tto> funcFromBuffer)
+        : this(new(pointer, length), funcFromBuffer) { }
 
-    public static bool operator !=(ReadOnlyConvertingSpan<Tfrom, Tto> left, ReadOnlyConvertingSpan<Tfrom, Tto> right) =>
-        !(left == right);
+    public int Length =>
+        Span.Length == 0
+            ? 0
+            : Span.Length / _size;
 
-    public static bool operator ==(ReadOnlyConvertingSpan<Tfrom, Tto> left, ReadOnlyConvertingSpan<Tfrom, Tto> right) =>
-        left.Span == right.Span && left._funcTo == right._funcTo;
+    public bool IsEmpty =>
+        Span.IsEmpty;
+
+    public static ReadOnlyBufferedSpan<Tfrom, Tto> Empty => default;
 
 #pragma warning disable CS0809 // Obsolete member overrides non-obsolete member
 
-    [Obsolete("Equals() on ReadOnlyConvertingSpan will always throw an exception. Use the equality operator instead.")]
+    [Obsolete("Equals() on ReadOnlyBufferedSpan will always throw an exception. Use the equality operator instead.")]
     [EditorBrowsable(EditorBrowsableState.Never)]
     public override bool Equals(object? obj) =>
         Span.Equals(obj);
 
-    [Obsolete("GetHashCode() on ReadOnlyConvertingSpan will always throw an exception.")]
+    [Obsolete("GetHashCode() on ReadOnlyBufferedSpan will always throw an exception.")]
     [EditorBrowsable(EditorBrowsableState.Never)]
     public override int GetHashCode() =>
         Span.GetHashCode();
 
 #pragma warning restore CS0809 // Obsolete member overrides non-obsolete member
 
-    public bool IsEmpty => 0 >= Span.Length;
+    public static bool operator !=(ReadOnlyBufferedSpan<Tfrom, Tto> left, ReadOnlyBufferedSpan<Tfrom, Tto> right) =>
+        !(left == right);
 
-    public static ReadOnlyConvertingSpan<Tfrom, Tto> Empty => default;
-
-    public int Length =>
-        Span.Length;
+    public static bool operator ==(ReadOnlyBufferedSpan<Tfrom, Tto> left, ReadOnlyBufferedSpan<Tfrom, Tto> right) =>
+        left.Span == right.Span && left._funcFromBuffer == right._funcFromBuffer;
 
     public Tto this[int index] =>
-        _funcTo(Span[index]);
-
-    public ReadOnlyConvertingSpan<Tfrom, Tto> this[Range range]
-    {
-        get
-        {
-            var (start, length) = range.GetOffsetAndLength(Span.Length);
-            return Slice(start, length);
-        }
-    }
+        _funcFromBuffer(Span[(index * _size)..]);
 
     public Tto this[Index index] =>
         this[index.GetOffset(Length)];
 
-    public ReadOnlyConvertingSpan<Tfrom, Tto> Slice(int start) =>
-        new(Span[start..], _funcTo);
+    public ReadOnlyBufferedSpan<Tfrom, Tto> this[Range range]
+    {
+        get
+        {
+            var (start, length) = range.GetOffsetAndLength(Length);
+            return Slice(start, length);
+        }
+    }
 
-    public ReadOnlyConvertingSpan<Tfrom, Tto> Slice(int start, int length) =>
-        new(Span.Slice(start, length), _funcTo);
+    public ReadOnlyBufferedSpan<Tfrom, Tto> Slice(int start) =>
+        new(Span[(start * _size)..], _funcFromBuffer);
 
-    public static ReadOnlyConvertingSpan<Tfrom, Tto> operator +(ReadOnlyConvertingSpan<Tfrom, Tto> span, int increase) =>
-        span[increase..];
+    public ReadOnlyBufferedSpan<Tfrom, Tto> Slice(int start, int length) =>
+        new(Span.Slice(start * _size, length * _size), _funcFromBuffer);
 
-    public static ReadOnlyConvertingSpan<Tfrom, Tto> operator ++(ReadOnlyConvertingSpan<Tfrom, Tto> span) =>
+    public static ReadOnlyBufferedSpan<Tfrom, Tto> operator +(ReadOnlyBufferedSpan<Tfrom, Tto> span, int start) =>
+        span[start..];
+
+    public static ReadOnlyBufferedSpan<Tfrom, Tto> operator ++(ReadOnlyBufferedSpan<Tfrom, Tto> span) =>
         span[1..];
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -94,25 +96,7 @@ public readonly ref struct ReadOnlyConvertingSpan<Tfrom, Tto>
         if (Length <= destination.Length)
         {
             for (int i = 0; i < Length; i++)
-            {
                 destination[i] = this[i];
-            }
-        }
-        else
-        {
-            throw new ArgumentException("Destination is too short.", nameof(destination));
-        }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void CopyTo<T>(ConvertingSpan<T, Tto> destination)
-    {
-        if (Length <= destination.Length)
-        {
-            for (int i = 0; i < Length; i++)
-            {
-                destination[i] = this[i];
-            }
         }
         else
         {
@@ -134,36 +118,34 @@ public readonly ref struct ReadOnlyConvertingSpan<Tfrom, Tto>
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void CopyTo<T>(ConvertingSpan<T, Tto> destination)
+    {
+        if (Length <= destination.Length)
+        {
+            for (int i = 0; i < Length; i++)
+                destination[i] = this[i];
+        }
+        else
+        {
+            throw new ArgumentException("Destination is too short.", nameof(destination));
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool TryCopyTo(Span<Tto> destination)
     {
         if (Length <= destination.Length)
         {
             for (int i = 0; i < Length; i++)
-            {
                 destination[i] = this[i];
-            }
-        }
-        else
-        {
-            return false;
-        }
-        return true;
-    }
 
-    public bool TryCopyTo<T>(ConvertingSpan<T, Tto> destination)
-    {
-        if (Length <= destination.Length)
-        {
-            for (int i = 0; i < Length; i++)
-            {
-                destination[i] = this[i];
-            }
+            return true;
         }
         else
         {
             return false;
         }
-        return true;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -182,22 +164,46 @@ public readonly ref struct ReadOnlyConvertingSpan<Tfrom, Tto>
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool TryCopyTo<T>(ConvertingSpan<T, Tto> destination)
+    {
+        if (Length <= destination.Length)
+        {
+            for (int i = 0; i < Length; i++)
+                destination[i] = this[i];
+
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
     public Tto[] ToArray()
     {
-        if (Length == 0)
-            return Array.Empty<Tto>();
+        var length = Length;
+        var array = new Tto[length];
+        for (var i = 0; i < length; i++)
+            array[i] = this[i];
 
-        Tto[] array = new Tto[Length];
-        CopyTo(array);
         return array;
     }
 
+    [ExcludeFromCodeCoverage]
+    public override string ToString() =>
+        $"MoreSpans.ReadOnlyBufferedSpan<{typeof(Tfrom).Name},{typeof(Tto).Name}>[{Span.Length} -> {Length}]";
+
+    [ExcludeFromCodeCoverage]
+    private string GetDebuggerDisplay() =>
+        ToString();
+
     public Enumerator GetEnumerator() =>
-        new Enumerator(this);
+        new(this);
 
     public ref struct Enumerator
     {
-        private readonly ReadOnlyConvertingSpan<Tfrom, Tto> _span;
+        private readonly ReadOnlyBufferedSpan<Tfrom, Tto> _span;
         private int _index;
         public readonly Tto Current
         {
@@ -206,7 +212,7 @@ public readonly ref struct ReadOnlyConvertingSpan<Tfrom, Tto>
                 _span[_index];
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal Enumerator(ReadOnlyConvertingSpan<Tfrom, Tto> span)
+        internal Enumerator(ReadOnlyBufferedSpan<Tfrom, Tto> span)
         {
             _span = span;
             _index = -1;
@@ -217,7 +223,7 @@ public readonly ref struct ReadOnlyConvertingSpan<Tfrom, Tto>
             int num = _index + 1;
             if (num < _span.Length)
             {
-                _index= num;
+                _index = num;
                 return true;
             }
             return false;
@@ -225,28 +231,22 @@ public readonly ref struct ReadOnlyConvertingSpan<Tfrom, Tto>
     }
 
     [ExcludeFromCodeCoverage]
-    public override string ToString() =>
-        $"MoreSpans.ReadOnlyConvertingSpan<{typeof(Tfrom).Name},{typeof(Tto).Name}>[{Length}]";
-
-    [ExcludeFromCodeCoverage]
-    private string GetDebuggerDisplay() =>
-        ToString();
-
-    [ExcludeFromCodeCoverage]
     private sealed class DebugView
     {
-        public DebugView(ReadOnlyConvertingSpan<Tfrom, Tto> span)
+        public DebugView(ReadOnlyBufferedSpan<Tfrom, Tto> span)
         {
             Items = new string[span.Length];
-            GetterFunction = span._funcTo;
+            GetterFunction = span._funcFromBuffer;
+            var size = span._size;
 
             for (var i = 0; i < span.Length; i++)
             {
-                var value = span.Span[i];
+                var temp = span.Span[(i * size)..];
+                var value = temp[..size].ToArray();
                 object? get;
                 try
                 {
-                    get = span._funcTo(value);
+                    get = span._funcFromBuffer(value);
                 }
                 catch (Exception e)
                 {
@@ -257,7 +257,7 @@ public readonly ref struct ReadOnlyConvertingSpan<Tfrom, Tto>
             }
         }
 
-        public ConvertFunc<Tfrom, Tto> GetterFunction { get; }
+        public FromBufferFunc<Tfrom, Tto> GetterFunction { get; }
 
         public string[] Items { get; }
     }
