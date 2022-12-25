@@ -7,7 +7,7 @@ namespace MoreSpans;
 
 [DebuggerDisplay($"{{{nameof(GetDebuggerDisplay)}(),nq}}")]
 [DebuggerTypeProxy(typeof(ConvertingSpan<,>.DebugView))]
-public readonly ref struct ConvertingSpan<Tfrom, Tto>
+public readonly ref partial struct ConvertingSpan<Tfrom, Tto>
 {
     private readonly ConvertFunc<Tfrom, Tto> _funcTo;
     private readonly ConvertFunc<Tto, Tfrom> _funcFrom;
