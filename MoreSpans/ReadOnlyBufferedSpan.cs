@@ -6,6 +6,7 @@ using System.Runtime.CompilerServices;
 namespace MoreSpans;
 
 [DebuggerDisplay($"{{{nameof(GetDebuggerDisplay)}(),nq}}")]
+[DebuggerTypeProxy(typeof(ReadOnlyBufferedSpan<,>.DebugView))]
 public readonly ref struct ReadOnlyBufferedSpan<Tfrom, Tto>
 {
     private readonly FromBufferFunc<Tfrom, Tto> _funcFromBuffer;
@@ -163,5 +164,37 @@ public readonly ref struct ReadOnlyBufferedSpan<Tfrom, Tto>
             }
             return false;
         }
+    }
+
+    [ExcludeFromCodeCoverage]
+    private sealed class DebugView
+    {
+        public DebugView(ReadOnlyBufferedSpan<Tfrom, Tto> span)
+        {
+            Items = new string[span.Length];
+            GetterFunction = span._funcFromBuffer;
+            var size = span._size;
+
+            for (var i = 0; i < span.Length; i++)
+            {
+                var temp = span.Span[(i * size)..];
+                var value = temp[..size].ToArray();
+                object? get;
+                try
+                {
+                    get = span._funcFromBuffer(value);
+                }
+                catch (Exception e)
+                {
+                    get = e;
+                }
+
+                Items[i] = $"{value} -Get-> {get}";
+            }
+        }
+
+        public FromBufferFunc<Tfrom, Tto> GetterFunction { get; }
+
+        public string[] Items { get; }
     }
 }
