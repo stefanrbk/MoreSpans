@@ -28,4 +28,10 @@ public readonly ref struct BufferedSpan<Tfrom, Tto>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public unsafe BufferedSpan(void* pointer, int length, FromBufferFunc<Tfrom, Tto> funcFromBuffer, ToBufferFunc<Tfrom, Tto> funcToBuffer)
         : this(new(pointer, length), funcFromBuffer, funcToBuffer) { }
+
+    public int Length =>
+        Span.Length / _size;
+
+    public bool IsEmpty =>
+        Span.IsEmpty;
 }
