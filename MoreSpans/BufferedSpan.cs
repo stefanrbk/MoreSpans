@@ -36,7 +36,9 @@ public readonly ref struct BufferedSpan<Tfrom, Tto>
         : this(new(pointer, length), funcFromBuffer, funcToBuffer) { }
 
     public int Length =>
-        Span.Length / _size;
+        Span.Length == 0
+            ? 0
+            : Span.Length / _size;
 
     public bool IsEmpty =>
         Span.IsEmpty;
