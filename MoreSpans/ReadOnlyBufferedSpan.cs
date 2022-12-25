@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.ComponentModel;
+using System.Runtime.CompilerServices;
 
 namespace MoreSpans;
 public readonly ref struct ReadOnlyBufferedSpan<Tfrom, Tto>
@@ -32,6 +33,20 @@ public readonly ref struct ReadOnlyBufferedSpan<Tfrom, Tto>
 
     public bool IsEmpty =>
         Span.IsEmpty;
+
+#pragma warning disable CS0809 // Obsolete member overrides non-obsolete member
+
+    [Obsolete("Equals() on ReadOnlyBufferedSpan will always throw an exception. Use the equality operator instead.")]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public override bool Equals(object? obj) =>
+        Span.Equals(obj);
+
+    [Obsolete("GetHashCode() on ReadOnlyBufferedSpan will always throw an exception.")]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public override int GetHashCode() =>
+        Span.GetHashCode();
+
+#pragma warning restore CS0809 // Obsolete member overrides non-obsolete member
 
     public Tto this[int index] =>
         _funcFromBuffer(Span[(index * _size)..]);
