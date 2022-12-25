@@ -6,6 +6,10 @@ namespace UnitTests;
 public class ReadOnlyBufferedSpanTests
 {
     private readonly byte[] neg25ToPos25AsShort = new byte[102];
+    private readonly ReadOnlyBufferedSpan<byte, short>.Factory byteToShortFactory = new(BitConverter.ToInt16);
+    private readonly ReadOnlyBufferedSpan<byte, short>.Factory doubleReadFactory = new(i => (short)(BitConverter.ToInt16(i) * 2));
+    private readonly ConvertingSpan<short, short>.Factory negationFactory = new(i => (short)-i, i => (short)-i);
+    private readonly BufferedSpan<byte, short>.Factory byteToShortFactoryFull = new(BitConverter.ToInt16, BitConverter.GetBytes);
 
     [SetUp]
     public void Setup()
@@ -31,7 +35,7 @@ public class ReadOnlyBufferedSpanTests
 
             for (int i = 0; i < span.Length; i++)
             {
-                Assert.That(span[i], Is.EqualTo(BitConverter.ToInt16(neg25ToPos25AsShort[(i * 2)..])));
+                Assert.That(span[i], Is.EqualTo(BitConverter.ToInt16(neg25ToPos25AsShort.AsSpan()[(i * 2)..])));
             }
         });
     }
@@ -149,7 +153,7 @@ public class ReadOnlyBufferedSpanTests
         {
             var span1 = GetNeg25ToPos25AsShortSpan();
             var span2 = GetNeg10ToPos10AsShortSpan();
-            var span3 = new ReadOnlyBufferedSpan<byte, short>(span2.Span, i => (short)(BitConverter.ToInt16(i) * 2));
+            var span3 = doubleReadFactory.Build(span2.Span);
 
             Assert.That(span1 != span2, Is.True);
             Assert.That(span1 == span2, Is.False);
@@ -191,7 +195,7 @@ public class ReadOnlyBufferedSpanTests
                 Span<byte> buf1 = stackalloc byte[20];
                 Span<short> buf2 = stackalloc short[9];
 
-                var span = new ReadOnlyBufferedSpan<byte, short>(buf1, BitConverter.ToInt16);
+                var span = byteToShortFactory.Build(buf1);
                 span.CopyTo(buf2);
             });
 
@@ -200,8 +204,8 @@ public class ReadOnlyBufferedSpanTests
                 Span<byte> buf1 = stackalloc byte[20];
                 Span<byte> buf2 = stackalloc byte[18];
 
-                var span1 = new ReadOnlyBufferedSpan<byte, short>(buf1, BitConverter.ToInt16);
-                var span2 = new BufferedSpan<byte, short>(buf2, BitConverter.ToInt16, BitConverter.GetBytes);
+                var span1 = byteToShortFactory.Build(buf1);
+                var span2 = byteToShortFactoryFull.Build(buf2);
                 span1.CopyTo(span2);
             });
 
@@ -210,8 +214,8 @@ public class ReadOnlyBufferedSpanTests
                 Span<byte> buf1 = stackalloc byte[20];
                 Span<short> buf2 = stackalloc short[9];
 
-                var span1 = new ReadOnlyBufferedSpan<byte, short>(buf1, BitConverter.ToInt16);
-                var span2 = new ConvertingSpan<short, short>(buf2, i => (short)-i, i => (short)-i);
+                var span1 = byteToShortFactory.Build(buf1);
+                var span2 = negationFactory.Build(buf2);
 
                 span1.CopyTo(span2);
             });
@@ -227,9 +231,9 @@ public class ReadOnlyBufferedSpanTests
             Span<byte> buf2 = stackalloc byte[18];
             Span<short> buf3 = stackalloc short[9];
 
-            var span1 = new ReadOnlyBufferedSpan<byte, short>(buf1, BitConverter.ToInt16);
-            var span2 = new ConvertingSpan<short, short>(buf3, i => (short)-i, i => (short)-i);
-            var span3 = new BufferedSpan<byte, short>(buf2, BitConverter.ToInt16, BitConverter.GetBytes);
+            var span1 = byteToShortFactory.Build(buf1);
+            var span2 = negationFactory.Build(buf3);
+            var span3 = byteToShortFactoryFull.Build(buf2);
 
             Assert.That(span1.TryCopyTo(buf3), Is.False);
             Assert.That(span1.TryCopyTo(span2), Is.False);
@@ -245,7 +249,7 @@ public class ReadOnlyBufferedSpanTests
             Span<byte> buf1 = stackalloc byte[] { 04, 00, 05, 00, 06, 00 };
             Span<short> buf2 = stackalloc short[5];
 
-            var span = new ReadOnlyBufferedSpan<byte, short>(buf1, BitConverter.ToInt16);
+            var span = byteToShortFactory.Build(buf1);
             span.CopyTo(buf2);
 
             for (var i = 0; i < buf2.Length; i++)
@@ -264,8 +268,8 @@ public class ReadOnlyBufferedSpanTests
             Span<byte> buf1 = stackalloc byte[] { 04, 00, 05, 00, 06, 00 };
             Span<short> buf2 = stackalloc short[5];
 
-            var span1 = new ReadOnlyBufferedSpan<byte, short>(buf1, BitConverter.ToInt16);
-            var span2 = new ConvertingSpan<short, short>(buf2, i => (short)-i, i => (short)-i);
+            var span1 = byteToShortFactory.Build(buf1);
+            var span2 = negationFactory.Build(buf2);
             span1.CopyTo(span2);
 
             for (var i = 0; i < buf2.Length; i++)
@@ -284,8 +288,8 @@ public class ReadOnlyBufferedSpanTests
             Span<byte> buf1 = stackalloc byte[] { 04, 00, 05, 00, 06, 00 };
             Span<byte> buf2 = stackalloc byte[10];
 
-            var span1 = new ReadOnlyBufferedSpan<byte, short>(buf1, BitConverter.ToInt16);
-            var span2 = new BufferedSpan<byte, short>(buf2, BitConverter.ToInt16, BitConverter.GetBytes);
+            var span1 = byteToShortFactory.Build(buf1);
+            var span2 = byteToShortFactoryFull.Build(buf2);
             span1.CopyTo(span2);
 
             for (var i = 0; i < buf2.Length; i++)
@@ -304,7 +308,7 @@ public class ReadOnlyBufferedSpanTests
             Span<byte> buf1 = stackalloc byte[] { 04, 00, 05, 00, 06, 00 };
             Span<short> buf2 = stackalloc short[5];
 
-            var span = new ReadOnlyBufferedSpan<byte, short>(buf1, BitConverter.ToInt16);
+            var span = byteToShortFactory.Build(buf1);
             Assert.That(span.TryCopyTo(buf2), Is.True);
 
             for (var i = 0; i < buf2.Length; i++)
@@ -323,8 +327,8 @@ public class ReadOnlyBufferedSpanTests
             Span<byte> buf1 = stackalloc byte[] { 04, 00, 05, 00, 06, 00 };
             Span<short> buf2 = stackalloc short[5];
 
-            var span1 = new ReadOnlyBufferedSpan<byte, short>(buf1, BitConverter.ToInt16);
-            var span2 = new ConvertingSpan<short, short>(buf2, i => (short)-i, i => (short)-i);
+            var span1 = byteToShortFactory.Build(buf1);
+            var span2 = negationFactory.Build(buf2);
             Assert.That(span1.TryCopyTo(span2), Is.True);
 
             for (var i = 0; i < buf2.Length; i++)
@@ -343,8 +347,8 @@ public class ReadOnlyBufferedSpanTests
             Span<byte> buf1 = stackalloc byte[] { 04, 00, 05, 00, 06, 00 };
             Span<byte> buf2 = stackalloc byte[10];
 
-            var span1 = new ReadOnlyBufferedSpan<byte, short>(buf1, BitConverter.ToInt16);
-            var span2 = new BufferedSpan<byte, short>(buf2, BitConverter.ToInt16, BitConverter.GetBytes);
+            var span1 = byteToShortFactory.Build(buf1);
+            var span2 = byteToShortFactoryFull.Build(buf2);
             Assert.That(span1.TryCopyTo(span2), Is.True);
 
             for (var i = 0; i < buf2.Length; i++)
@@ -381,7 +385,7 @@ public class ReadOnlyBufferedSpanTests
         Assert.Multiple(() =>
         {
             Span<byte> buf = stackalloc byte[] { 00, 00, 01, 00, 02, 00, 03, 00, 04, 00, 05, 00 };
-            var span = new ReadOnlyBufferedSpan<byte, short>(buf, BitConverter.ToInt16);
+            var span = byteToShortFactory.Build(buf);
 
             var j = 0;
             foreach (var i in span)
@@ -396,7 +400,7 @@ public class ReadOnlyBufferedSpanTests
         {
             fixed (void* ptr = &neg25ToPos25AsShort[0])
             {
-                var span = new ReadOnlyBufferedSpan<byte, short>(ptr, 102, BitConverter.ToInt16);
+                var span = byteToShortFactory.Build(ptr, 102);
 
                 Assert.That(span[^1], Is.EqualTo(25));
                 Assert.That(span[^2], Is.EqualTo(24));
@@ -407,8 +411,8 @@ public class ReadOnlyBufferedSpanTests
     }
 
     private ReadOnlyBufferedSpan<byte, short> GetNeg25ToPos25AsShortSpan() =>
-        new(neg25ToPos25AsShort, BitConverter.ToInt16);
+        byteToShortFactory.Build(neg25ToPos25AsShort);
 
     private ReadOnlyBufferedSpan<byte, short> GetNeg10ToPos10AsShortSpan() =>
-        new(neg25ToPos25AsShort, 30, 42, BitConverter.ToInt16);
+        byteToShortFactory.Build(neg25ToPos25AsShort, 30, 42);
 }
