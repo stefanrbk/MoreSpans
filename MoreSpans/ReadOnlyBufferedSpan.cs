@@ -50,4 +50,10 @@ public readonly ref struct ReadOnlyBufferedSpan<Tfrom, Tto>
 
     public ReadOnlyBufferedSpan<Tfrom, Tto> Slice(int start, int length) =>
         new(Span.Slice(start * _size, length * _size), _funcFromBuffer);
+
+    public static ReadOnlyBufferedSpan<Tfrom, Tto> operator +(ReadOnlyBufferedSpan<Tfrom, Tto> span, int start) =>
+        span[start..];
+
+    public static ReadOnlyBufferedSpan<Tfrom, Tto> operator ++(ReadOnlyBufferedSpan<Tfrom, Tto> span) =>
+        span[1..];
 }
