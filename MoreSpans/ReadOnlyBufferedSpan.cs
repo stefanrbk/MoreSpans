@@ -30,6 +30,9 @@ public readonly ref struct ReadOnlyBufferedSpan<Tfrom, Tto>
     public int Length =>
         Span.Length / _size;
 
+    public bool IsEmpty =>
+        Span.IsEmpty;
+
     public Tto this[int index] =>
         _funcFromBuffer(Span[(index * _size)..]);
 
