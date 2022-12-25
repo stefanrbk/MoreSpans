@@ -179,6 +179,17 @@ public class ReadOnlyConvertingSpanTests
 
                 span1.CopyTo(span2);
             });
+
+            Assert.Throws<ArgumentException>(() =>
+            {
+                Span<int> buf1 = stackalloc int[10];
+                Span<byte> buf2 = stackalloc byte[36];
+
+                var span1 = new ReadOnlyConvertingSpan<int, int>(buf1, i => -i);
+                var span2 = new BufferedSpan<byte, int>(buf2, BitConverter.ToInt32, BitConverter.GetBytes);
+
+                span1.CopyTo(span2);
+            });
         });
     }
 
@@ -189,12 +200,15 @@ public class ReadOnlyConvertingSpanTests
         {
             Span<int> buf1 = stackalloc int[10];
             Span<int> buf2 = stackalloc int[9];
+            Span<byte> buf3 = stackalloc byte[36];
 
             var span1 = new ReadOnlyConvertingSpan<int, int>(buf1, i => -i);
             var span2 = new ConvertingSpan<int, int>(buf2, i => -i, i => -i);
+            var span3 = new BufferedSpan<byte, int>(buf3, BitConverter.ToInt32, BitConverter.GetBytes);
 
             Assert.That(span1.TryCopyTo(buf2), Is.False);
             Assert.That(span1.TryCopyTo(span2), Is.False);
+            Assert.That(span1.TryCopyTo(span3), Is.False);
         });
     }
 
@@ -235,6 +249,23 @@ public class ReadOnlyConvertingSpanTests
     }
 
     [Test]
+    public void CopyToCopiesTheValuesToABufferedSpan()
+    {
+        Assert.Multiple(() =>
+        {
+            Span<int> buf1 = Enumerable.Range(4, 6).ToArray();
+            Span<byte> buf2 = stackalloc byte[40];
+
+            var span1 = new ReadOnlyConvertingSpan<int, int>(buf1, i => -i);
+            var span2 = new BufferedSpan<byte, int>(buf2, BitConverter.ToInt32, BitConverter.GetBytes);
+            span1.CopyTo(span2);
+
+            for (var i = 0; i < span2.Length; i++)
+                Assert.That(span2[i], Is.EqualTo(i < span1.Length ? span1[i] : 0));
+        });
+    }
+
+    [Test]
     public void TryCopyToCopiesTheValuesToASpanAndReturnsTrue()
     {
         Assert.Multiple(() =>
@@ -267,6 +298,23 @@ public class ReadOnlyConvertingSpanTests
                 Assert.That(span2[i], Is.EqualTo(i < span1.Length ? span1[i] : 0));
                 Assert.That(buf2[i], Is.EqualTo(i < buf1.Length ? buf1[i] : 0));
             }
+        });
+    }
+
+    [Test]
+    public void TryCopyToCopiesTheValuesToABufferedSpanAndReturnsTrue()
+    {
+        Assert.Multiple(() =>
+        {
+            Span<int> buf1 = Enumerable.Range(4, 6).ToArray();
+            Span<byte> buf2 = stackalloc byte[40];
+
+            var span1 = new ReadOnlyConvertingSpan<int, int>(buf1, i => -i);
+            var span2 = new BufferedSpan<byte, int>(buf2, BitConverter.ToInt32, BitConverter.GetBytes);
+            Assert.That(span1.TryCopyTo(span2), Is.True);
+
+            for (var i = 0; i < span2.Length; i++)
+                Assert.That(span2[i], Is.EqualTo(i < span1.Length ? span1[i] : 0));
         });
     }
 
