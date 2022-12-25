@@ -1,6 +1,6 @@
 using MoreSpans;
 
-namespace Unit_Tests;
+namespace UnitTests;
 
 [TestFixture(TestOf = typeof(ReadOnlyConvertingSpan<,>))]
 public class ReadOnlyConvertingSpanTests
@@ -123,7 +123,7 @@ public class ReadOnlyConvertingSpanTests
         {
             var span1 = GetNeg50ToPos50Span();
             var span2 = GetNeg20ToPos20Span();
-            var span3 = new ReadOnlyConvertingSpan<int, int>(span2.Span, i => i*2);
+            var span3 = new ReadOnlyConvertingSpan<int, int>(span2.Span, i => i * 2);
 
             Assert.That(span1 != span2, Is.True);
             Assert.That(span1 == span2, Is.False);
@@ -309,7 +309,7 @@ public class ReadOnlyConvertingSpanTests
     {
         Assert.Multiple(() =>
         {
-            fixed(void* ptr = &neg50ToPos50[0])
+            fixed (void* ptr = &neg50ToPos50[0])
             {
                 var span = new ReadOnlyConvertingSpan<int, int>(ptr, 101, i => -i);
 

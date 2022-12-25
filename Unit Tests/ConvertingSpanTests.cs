@@ -1,6 +1,6 @@
 using MoreSpans;
 
-namespace Unit_Tests;
+namespace UnitTests;
 
 [TestFixture(TestOf = typeof(ConvertingSpan<,>))]
 public class ConvertingSpanTests
