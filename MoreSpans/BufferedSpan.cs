@@ -57,4 +57,34 @@ public readonly ref struct BufferedSpan<Tfrom, Tto>
 
     public static bool operator ==(BufferedSpan<Tfrom, Tto> left, BufferedSpan<Tfrom, Tto> right) =>
         left.Span == right.Span && left._funcFromBuffer == right._funcFromBuffer && left._funcToBuffer == right._funcToBuffer;
+
+    public Tto this[int index]
+    {
+        get
+        {
+            return _funcFromBuffer(Span[(index * _size)..]);
+        }
+        set
+        {
+            _funcToBuffer(value).CopyTo(Span[(index * _size)..]);
+        }
+    }
+
+    public Tto this[Index index] =>
+        this[index.GetOffset(Length)];
+
+    public ReadOnlyBufferedSpan<Tfrom, Tto> this[Range range]
+    {
+        get
+        {
+            var (start, length) = range.GetOffsetAndLength(Length);
+            return Slice(start, length);
+        }
+    }
+
+    public ReadOnlyBufferedSpan<Tfrom, Tto> Slice(int start) =>
+        new(Span[(start * _size)..], _funcFromBuffer);
+
+    public ReadOnlyBufferedSpan<Tfrom, Tto> Slice(int start, int length) =>
+        new(Span.Slice(start * _size, length * _size), _funcFromBuffer);
 }
