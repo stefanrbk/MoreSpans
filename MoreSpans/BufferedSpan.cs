@@ -60,20 +60,21 @@ public readonly ref struct BufferedSpan<Tfrom, Tto>
 
     public Tto this[int index]
     {
-        get
-        {
-            return _funcFromBuffer(Span[(index * _size)..]);
-        }
-        set
-        {
+        get =>
+            _funcFromBuffer(Span[(index * _size)..]);
+        set =>
             _funcToBuffer(value).CopyTo(Span[(index * _size)..]);
-        }
     }
 
-    public Tto this[Index index] =>
-        this[index.GetOffset(Length)];
+    public Tto this[Index index]
+    {
+        get =>
+            this[index.GetOffset(Length)];
+        set =>
+            this[index.GetOffset(Length)] = value;
+    }
 
-    public ReadOnlyBufferedSpan<Tfrom, Tto> this[Range range]
+    public BufferedSpan<Tfrom, Tto> this[Range range]
     {
         get
         {
@@ -82,9 +83,15 @@ public readonly ref struct BufferedSpan<Tfrom, Tto>
         }
     }
 
-    public ReadOnlyBufferedSpan<Tfrom, Tto> Slice(int start) =>
-        new(Span[(start * _size)..], _funcFromBuffer);
+    public BufferedSpan<Tfrom, Tto> Slice(int start) =>
+        new(Span[(start * _size)..], _funcFromBuffer, _funcToBuffer);
 
-    public ReadOnlyBufferedSpan<Tfrom, Tto> Slice(int start, int length) =>
-        new(Span.Slice(start * _size, length * _size), _funcFromBuffer);
+    public BufferedSpan<Tfrom, Tto> Slice(int start, int length) =>
+        new(Span.Slice(start * _size, length * _size), _funcFromBuffer, _funcToBuffer);
+
+    public static BufferedSpan<Tfrom, Tto> operator +(BufferedSpan<Tfrom, Tto> span, int start) =>
+        span[start..];
+
+    public static BufferedSpan<Tfrom, Tto> operator ++(BufferedSpan<Tfrom, Tto> span) =>
+        span[1..];
 }
