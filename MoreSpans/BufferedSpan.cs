@@ -94,4 +94,44 @@ public readonly ref struct BufferedSpan<Tfrom, Tto>
 
     public static BufferedSpan<Tfrom, Tto> operator ++(BufferedSpan<Tfrom, Tto> span) =>
         span[1..];
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void CopyTo(Span<Tto> destination)
+    {
+        if (Length <= destination.Length)
+        {
+            for (int i = 0; i < Length; i++)
+                destination[i] = this[i];
+        }
+        else
+        {
+            throw new ArgumentException("Destination is too short.", nameof(destination));
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool TryCopyTo(Span<Tto> destination)
+    {
+        if (Length <= destination.Length)
+        {
+            for (int i = 0; i < Length; i++)
+                destination[i] = this[i];
+
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    public Tto[] ToArray()
+    {
+        var length = Length;
+        var array = new Tto[length];
+        for (var i = 0; i < length; i++)
+            array[i] = this[i];
+
+        return array;
+    }
 }
