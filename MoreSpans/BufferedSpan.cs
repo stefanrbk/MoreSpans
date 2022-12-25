@@ -1,7 +1,11 @@
 ﻿using System.ComponentModel;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace MoreSpans;
+
+[DebuggerDisplay($"{{{nameof(GetDebuggerDisplay)}(),nq}}")]
 public readonly ref struct BufferedSpan<Tfrom, Tto>
 {
     private readonly FromBufferFunc<Tfrom, Tto> _funcFromBuffer;
@@ -134,4 +138,12 @@ public readonly ref struct BufferedSpan<Tfrom, Tto>
 
         return array;
     }
+
+    [ExcludeFromCodeCoverage]
+    public override string ToString() =>
+        $"MoreSpans.BufferedSpan<{typeof(Tfrom).Name},{typeof(Tto).Name}>[{Span.Length} -> {Length}]";
+
+    [ExcludeFromCodeCoverage]
+    private string GetDebuggerDisplay() =>
+        ToString();
 }
