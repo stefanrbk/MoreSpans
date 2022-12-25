@@ -202,6 +202,9 @@ public readonly ref struct BufferedSpan<Tfrom, Tto>
         return array;
     }
 
+    public static implicit operator ReadOnlyBufferedSpan<Tfrom, Tto>(BufferedSpan<Tfrom, Tto> span) =>
+        new(span.Span, span._funcFromBuffer);
+
     [ExcludeFromCodeCoverage]
     public override string ToString() =>
         $"MoreSpans.BufferedSpan<{typeof(Tfrom).Name},{typeof(Tto).Name}>[{Span.Length} <-> {Length}]";

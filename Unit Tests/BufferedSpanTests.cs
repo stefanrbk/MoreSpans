@@ -436,6 +436,17 @@ public class BufferedSpanTests
         });
     }
 
+    [Test]
+    public void BufferedSpanDownCastsToReadOnlyBufferedSpan()
+    {
+        Span<byte> buf = stackalloc byte[10];
+
+        var span1 = new BufferedSpan<byte, short>(buf, BitConverter.ToInt16, BitConverter.GetBytes);
+        var span2 = new ReadOnlyBufferedSpan<byte, short>(buf, BitConverter.ToInt16);
+
+        Assert.That(span1 == span2);
+    }
+
     private BufferedSpan<byte, short> GetNeg25ToPos25AsShortSpan() =>
         new(neg25ToPos25AsShort, BitConverter.ToInt16, BitConverter.GetBytes);
 
