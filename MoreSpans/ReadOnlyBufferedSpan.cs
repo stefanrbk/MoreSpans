@@ -48,6 +48,12 @@ public readonly ref struct ReadOnlyBufferedSpan<Tfrom, Tto>
 
 #pragma warning restore CS0809 // Obsolete member overrides non-obsolete member
 
+    public static bool operator !=(ReadOnlyBufferedSpan<Tfrom, Tto> left, ReadOnlyBufferedSpan<Tfrom, Tto> right) =>
+        !(left == right);
+
+    public static bool operator ==(ReadOnlyBufferedSpan<Tfrom, Tto> left, ReadOnlyBufferedSpan<Tfrom, Tto> right) =>
+        left.Span == right.Span && left._funcFromBuffer == right._funcFromBuffer;
+
     public Tto this[int index] =>
         _funcFromBuffer(Span[(index * _size)..]);
 
