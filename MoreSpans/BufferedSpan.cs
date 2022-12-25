@@ -34,4 +34,6 @@ public readonly ref struct BufferedSpan<Tfrom, Tto>
 
     public bool IsEmpty =>
         Span.IsEmpty;
+
+    public static BufferedSpan<Tfrom, Tto> Empty => default;
 }

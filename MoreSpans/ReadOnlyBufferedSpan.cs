@@ -39,6 +39,8 @@ public readonly ref struct ReadOnlyBufferedSpan<Tfrom, Tto>
     public bool IsEmpty =>
         Span.IsEmpty;
 
+    public static ReadOnlyBufferedSpan<Tfrom, Tto> Empty => default;
+
 #pragma warning disable CS0809 // Obsolete member overrides non-obsolete member
 
     [Obsolete("Equals() on ReadOnlyBufferedSpan will always throw an exception. Use the equality operator instead.")]
